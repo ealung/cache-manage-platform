@@ -1,0 +1,45 @@
+{
+  "hints": [
+    {
+      "name": "cache.manage.appName",
+      "values": [
+        {
+          "value": "",
+          "description": "项目chace管理名称必须唯一"
+        }
+      ]
+    },
+    {
+      "name": "cache.manage.webEnable",
+      "values": [
+        {
+          "value": false,
+          "description": "关闭cache manage web页面管理功能"
+        },
+        {
+          "value": true,
+          "description": "开启cache manage web页面管理功能"
+        }
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "sourceType": "com.netease.edu.kada.cache.config.CacheWebProperties",
+      "name": "cacheManage",
+      "type": "com.netease.edu.kada.cache.config.CacheWebProperties"
+    }
+  ],
+  "properties": [
+    {
+      "sourceType": "com.netease.edu.kada.cache.config.CacheWebProperties",
+      "name": "cache.manage.appName",
+      "type": "java.lang.String"
+    },
+    {
+      "sourceType": "com.netease.edu.kada.cache.config.CacheWebProperties",
+      "name": "cache.manage.webEnable",
+      "type": "java.lang.Boolean"
+    }
+  ]
+}
