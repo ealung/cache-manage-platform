@@ -1,15 +1,12 @@
 package com.netease.edu.kada.cache.core.dto;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import java.util.Collection;
 
 /**
- * @author zhangchanglu<hzzhangchanglu @ corp.netease.com>
+ * @author zhangchanglu
  * @since 2018/10/16 17:18.
  */
-public class CacheEntityDto {
+public class CacheDto {
     private Long id;
     //项目名称（必须唯一）
     private String appName;
@@ -21,6 +18,25 @@ public class CacheEntityDto {
     private String cacheConfigKey;
     //缓存操作类型
     private String cacheOperation;
+
+    private Collection<CacheKeyDto> cacheKeyDtos;
+    private Collection<CacheNameDto> cacheNameDtos;
+
+    public Collection<CacheKeyDto> getCacheKeyDtos() {
+        return cacheKeyDtos;
+    }
+
+    public void setCacheKeyDtos(Collection<CacheKeyDto> cacheKeyDtos) {
+        this.cacheKeyDtos = cacheKeyDtos;
+    }
+
+    public Collection<CacheNameDto> getCacheNameDtos() {
+        return cacheNameDtos;
+    }
+
+    public void setCacheNameDtos(Collection<CacheNameDto> cacheNameDtos) {
+        this.cacheNameDtos = cacheNameDtos;
+    }
 
     public Long getId() {
         return id;

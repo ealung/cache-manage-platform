@@ -1,11 +1,11 @@
 package com.netease.edu.kada.cache.server;
 
-import com.netease.edu.kada.cache.core.dto.CacheMethodDto;
-import com.netease.edu.kada.cache.core.dto.ClassCacheDto;
+import com.netease.edu.kada.cache.core.dto.CacheDto;
+import com.netease.edu.kada.cache.core.dto.CacheNameDto;
+import com.netease.edu.kada.cache.core.dto.CacheProjectDto;
 import com.netease.edu.kada.cache.core.storage.ProjectCacheInvoke;
 import com.netease.edu.kada.cache.repository.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.interceptor.CacheOperation;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -19,7 +19,7 @@ import java.util.Objects;
  * @since 2018/12/22 22:42.
  */
 @Slf4j
-@Component
+@Component("cacheManageRemoteService")
 public class CacheManageRemoteService implements ProjectCacheInvoke {
     @Resource
     private CacheRepository cacheRepository;
@@ -29,32 +29,30 @@ public class CacheManageRemoteService implements ProjectCacheInvoke {
     private CacheKeyRepository cacheKeyRepository;
 
     @Override
-    public void allCacheConfig(Collection<ClassCacheDto> cacheConfig, String appName) {
+    public void allCacheConfig(CacheProjectDto cacheProjectDto) {
+        String appName = cacheProjectDto.getAppName();
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                for (ClassCacheDto classCacheDto : cacheConfig) {
-                    log.info("load cache class {}", classCacheDto.getClassName());
-                    for (CacheMethodDto cacheMethodDto : classCacheDto.getCacheMethodDtos()) {
-                        CacheOperation cacheOperation = cacheMethodDto.getCacheOperation();
-                        CacheEntity cacheEntity = new CacheEntity();
-                        cacheEntity.setAppName(appName);
-                        cacheEntity.setClassName(classCacheDto.getClassName());
-                        cacheEntity.setMethodName(cacheMethodDto.getMethodName());
-                        cacheEntity.setCacheConfigKey(cacheOperation.getKey());
-                        cacheEntity.setCacheOperation(cacheOperation.getClass().getSimpleName());
-                        CacheEntity allByClassNameAndMethodNameAndCacheConfigKey = cacheRepository.findAllByClassNameAndMethodNameAndCacheConfigKeyAndAppName(classCacheDto.getClassName(), cacheMethodDto.getMethodName(), cacheOperation.getKey(), appName);
-                        if (!Objects.isNull(allByClassNameAndMethodNameAndCacheConfigKey)) {
-                            continue;
-                        }
-                        cacheRepository.save(cacheEntity);
-                        for (String s : cacheOperation.getCacheNames()) {
-                            CacheNameEntity cacheNameEntity = new CacheNameEntity();
-                            cacheNameEntity.setCacheName(s);
-                            cacheNameEntity.setAppName(appName);
-                            cacheNameEntity.setCacheEntity(cacheEntity);
-                            cacheNameRepository.save(cacheNameEntity);
-                        }
+                Collection<CacheDto> cacheDtos = cacheProjectDto.getCacheDtos();
+                for (CacheDto cacheDto : cacheDtos) {
+                    CacheEntity cacheEntity = new CacheEntity();
+                    cacheEntity.setAppName(appName);
+                    cacheEntity.setClassName(cacheDto.getClassName());
+                    cacheEntity.setMethodName(cacheDto.getMethodName());
+                    cacheEntity.setCacheConfigKey(cacheDto.getCacheConfigKey());
+                    cacheEntity.setCacheOperation(cacheDto.getCacheOperation());
+                    CacheEntity allByClassNameAndMethodNameAndCacheConfigKey = cacheRepository.findAllByClassNameAndMethodNameAndCacheConfigKeyAndAppName(cacheDto.getClassName(), cacheDto.getMethodName(), cacheDto.getCacheConfigKey(), appName);
+                    if (!Objects.isNull(allByClassNameAndMethodNameAndCacheConfigKey)) {
+                        continue;
+                    }
+                    cacheRepository.save(cacheEntity);
+                    for (CacheNameDto cacheNameDto : cacheDto.getCacheNameDtos()) {
+                        CacheNameEntity cacheNameEntity = new CacheNameEntity();
+                        cacheNameEntity.setCacheName(cacheNameDto.getCacheName());
+                        cacheNameEntity.setAppName(appName);
+                        cacheNameEntity.setCacheEntity(cacheEntity);
+                        cacheNameRepository.save(cacheNameEntity);
                     }
                 }
                 log.info("load cache class finish");
@@ -74,30 +72,30 @@ public class CacheManageRemoteService implements ProjectCacheInvoke {
 
     @Override
     @Transactional
-    public synchronized void afterCacheEvict(String cacheName, Object key, String appName) {
-        cacheKeyRepository.removeByCacheKeyAndAppName(key.toString(), appName);
+    public synchronized void afterCacheEvict(String cacheName, String key, String appName) {
+        cacheKeyRepository.removeByCacheKeyAndAppName(key, appName);
     }
 
     @Override
-    public void afterCachePut(String cacheName, Object key, String className, String methodName, String cacheConfigKey, String appName) {
+    public void afterCachePut(String cacheName, String key, String className, String methodName, String cacheConfigKey, String appName) {
         CacheEntity cacheEntity = cacheRepository.findAllByClassNameAndMethodNameAndCacheConfigKeyAndAppName(className, methodName, cacheConfigKey, appName);
         if (null != cacheEntity) {
-            Collection<CacheKeyEntity> byCacheKeyAndCacheEntity_idAndAppName = cacheKeyRepository.findByCacheKeyAndCacheEntity_IdAndAppName(key.toString(), cacheEntity.getId(), appName);
+            Collection<CacheKeyEntity> byCacheKeyAndCacheEntity_idAndAppName = cacheKeyRepository.findByCacheKeyAndCacheEntity_IdAndAppName(key, cacheEntity.getId(), appName);
             if (CollectionUtils.isEmpty(byCacheKeyAndCacheEntity_idAndAppName)) {
-                saveCacheKeyEntity(key.toString(), cacheEntity, appName);
+                saveCacheKeyEntity(key, cacheEntity, appName);
             } else if (byCacheKeyAndCacheEntity_idAndAppName.size() > 1) {
                 //这里有可能部分key过期没能同步删除，造成多次缓存，暂时先清空再增加
                 log.warn("repetition cacheId:{} - key :{}", cacheEntity.getId(), key);
                 for (CacheKeyEntity keyEntity : byCacheKeyAndCacheEntity_idAndAppName) {
                     cacheKeyRepository.delete(keyEntity);
                 }
-                saveCacheKeyEntity(key.toString(), cacheEntity, appName);
+                saveCacheKeyEntity(key, cacheEntity, appName);
             }
         }
     }
 
     @Override
-    public void afterCacheGet(String cacheName, Object key, String appName) {
+    public void afterCacheGet(String cacheName, String key, String appName) {
 
     }
 

@@ -1,7 +1,8 @@
 package com.netease.edu.kada.cache.server;
 
-import com.netease.edu.kada.cache.core.dto.ClassCacheDto;
+import com.netease.edu.kada.cache.core.dto.CacheProjectDto;
 import com.netease.edu.kada.cache.core.storage.ProjectCacheInvoke;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,19 +15,20 @@ import java.util.Collection;
  * @author zhangchanglu
  * @since 2018/12/22 19:06.
  */
+@RestController
 @RequestMapping("/kada/cache/manage")
 public class CacheManageRemoteController {
-    @Resource
+    @Resource(name = "cacheManageRemoteService")
     private ProjectCacheInvoke projectCacheInvoke;
 
     /**
      * 所有缓存配置
      *
-     * @param cacheConfig 缓存配置集合
+     * @param cacheProjectDto 缓存配置集合
      */
-    @PostMapping("/init/cache")
-    public void allCacheConfig(Collection<ClassCacheDto> cacheConfig, String appName) {
-        projectCacheInvoke.allCacheConfig(cacheConfig, appName);
+    @PostMapping("/init")
+    public void allCacheConfig(@RequestBody CacheProjectDto cacheProjectDto) {
+        projectCacheInvoke.allCacheConfig(cacheProjectDto);
     }
 
     @RequestMapping("/clear")
@@ -35,17 +37,17 @@ public class CacheManageRemoteController {
     }
 
     @RequestMapping("/get")
-    void afterCacheGet(String cacheName, Object key, String appName) {
+    void afterCacheGet(String cacheName, String key, String appName) {
         projectCacheInvoke.afterCacheGet(cacheName, key, appName);
     }
 
     @RequestMapping("/evict")
-    void afterCacheEvict(String cacheName, Object key, String appName) {
+    void afterCacheEvict(String cacheName, String key, String appName) {
         projectCacheInvoke.afterCacheEvict(cacheName, key, appName);
     }
 
     @RequestMapping("put")
-    void afterCachePut(String cacheName, Object key, String className, String methodName, String cacheConfigKey, String appName) {
+    void afterCachePut(String cacheName, String key, String className, String methodName, String cacheConfigKey, String appName) {
         projectCacheInvoke.afterCachePut(cacheName, key, className, methodName, cacheConfigKey, appName);
     }
 }

@@ -2,8 +2,7 @@ package com.netease.edu.kada.cache.core.core;
 
 import com.netease.edu.kada.cache.core.config.CacheWebProperties;
 import com.netease.edu.kada.cache.core.core.duplicate.CacheAspectSupport;
-import com.netease.edu.kada.cache.core.dto.CacheMethodDto;
-import com.netease.edu.kada.cache.core.dto.ClassCacheDto;
+import com.netease.edu.kada.cache.core.dto.*;
 import com.netease.edu.kada.cache.core.storage.ProjectCacheInvoke;
 import lombok.extern.slf4j.Slf4j;
 import org.aopalliance.intercept.MethodInterceptor;
@@ -24,10 +23,7 @@ import org.springframework.util.ReflectionUtils;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author zhangchanglu
@@ -74,7 +70,7 @@ public class NetEaseCacheInterceptor extends CacheAspectSupport implements Metho
 
     @Override
     public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
-        List<ClassCacheDto> cacheConfig = new ArrayList<>();
+        List<CacheDto> cacheConfig = new ArrayList<>();
         ApplicationContext applicationContext = event.getApplicationContext();
         Map<String, ProjectCacheInvoke> cacheStorageMap = applicationContext.getBeansOfType(ProjectCacheInvoke.class);
         if (cacheStorageMap.isEmpty()) {
@@ -87,10 +83,15 @@ public class NetEaseCacheInterceptor extends CacheAspectSupport implements Metho
             netEaseCacheHandler.setProjectCacheInvoke(projectCacheInvoke);
             addHandler(netEaseCacheHandler);
         });
+        Map<String, CacheWebProperties> cacheWebPropertiesMap = applicationContext.getBeansOfType(CacheWebProperties.class);
+        if (CollectionUtils.isEmpty(cacheStorageMap)) {
+            log.warn("load bean CacheWebProperties fail");
+            return;
+        }
+        String appName = cacheWebPropertiesMap.entrySet().iterator().next().getValue().getAppName();
         AnnotationCacheOperationSource annotationCacheOperationSource = new AnnotationCacheOperationSource();
         String[] beanDefinitionNames = applicationContext.getBeanDefinitionNames();
         for (String s : beanDefinitionNames) {
-            Collection<CacheMethodDto> cacheMethodDtos = new ArrayList<>();
             final Object bean;
             try {
                 bean = applicationContext.getBean(s);
@@ -103,23 +104,34 @@ public class NetEaseCacheInterceptor extends CacheAspectSupport implements Metho
                     Collection<CacheOperation> cacheOperations = annotationCacheOperationSource.getCacheOperations(method, bean.getClass());
                     if (!CollectionUtils.isEmpty(cacheOperations)) {
                         for (CacheOperation cacheOperation : cacheOperations) {
-                            CacheMethodDto cacheMethodDto = new CacheMethodDto();
-                            cacheMethodDto.setMethodName(method.getName());
-                            cacheMethodDto.setCacheOperation(cacheOperation);
-                            cacheMethodDtos.add(cacheMethodDto);
+                            CacheDto cacheDto=new CacheDto();
+                            cacheDto.setAppName(appName);
+                            cacheDto.setClassName(getTargetClassName(bean));
+                            cacheDto.setMethodName(method.getName());
+                            cacheDto.setCacheConfigKey(cacheOperation.getKey());
+                            cacheDto.setCacheOperation(cacheOperation.getClass().getSimpleName());
+                            Collection<CacheNameDto> cacheNameDtos=new ArrayList<>();
+                            //每个cache信息的详情
+                            for (String cacheName : cacheOperation.getCacheNames()) {
+                                CacheNameDto cacheNameDto = new CacheNameDto();
+                                cacheNameDto.setCacheName(cacheName);
+                                cacheNameDto.setAppName(appName);
+                                cacheNameDtos.add(cacheNameDto);
+                            }
+                            cacheDto.setCacheNameDtos(cacheNameDtos);
+                            cacheConfig.add(cacheDto);
                         }
                     }
                 }
             });
-            if (!cacheMethodDtos.isEmpty()) {
-                cacheConfig.add(new ClassCacheDto(bean.getClass(), cacheMethodDtos));
-            }
         }
-        Map<String, CacheWebProperties> cacheWebPropertiesMap = applicationContext.getBeansOfType(CacheWebProperties.class);
-        if (CollectionUtils.isEmpty(cacheStorageMap)) {
-            log.warn("load bean CacheWebProperties fail");
-            return;
-        }
-        projectCacheInvoke.allCacheConfig(cacheConfig, cacheWebPropertiesMap.entrySet().iterator().next().getValue().getAppName());
+        CacheProjectDto cacheProjectDto = new CacheProjectDto();
+        cacheProjectDto.setAppName(appName);
+        cacheProjectDto.setCacheDtos(cacheConfig);
+        projectCacheInvoke.allCacheConfig(cacheProjectDto);
+    }
+    private String getTargetClassName(Object bean){
+        String name = bean.getClass().getName();
+        return name.substring(0,name.indexOf("$$"));
     }
 }

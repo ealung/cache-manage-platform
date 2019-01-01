@@ -13,6 +13,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient("cache.manage.client")
 public interface CacheManageClientService {
 
-    @RequestMapping(value = "/kada/cache/manage/evict", method = RequestMethod.GET)
+    @RequestMapping(value = "/kada/cache/manage/client/evict", method = RequestMethod.GET)
     void cacheEvict(@RequestParam("cacheName") String cacheName, @RequestParam("key") String key);
 }

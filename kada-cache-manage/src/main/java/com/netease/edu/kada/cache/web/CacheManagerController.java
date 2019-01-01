@@ -1,10 +1,10 @@
 package com.netease.edu.kada.cache.web;
 
 import com.netease.edu.kada.cache.core.config.CacheWebProperties;
-import com.netease.edu.kada.cache.core.dto.ClassCacheDto;
 import com.netease.edu.kada.cache.core.storage.CacheStorage;
 import com.netease.edu.kada.cache.core.storage.ProjectCacheInvoke;
 import com.netease.edu.kada.cache.core.storage.SearchParam;
+import com.netease.edu.kada.cache.core.vo.ClassCacheVo;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -27,13 +27,13 @@ public class CacheManagerController {
 
     @RequestMapping("/com/netease/edu/kada/cache/core/manager/all")
     @ResponseBody
-    public Collection<ClassCacheDto> allCache(String appName) {
+    public Collection<ClassCacheVo> allCache(String appName) {
         return cacheStorage.getAllCache(appName);
     }
 
     @RequestMapping("/com/netease/edu/kada/cache/core/manager/search")
     @ResponseBody
-    public Collection<ClassCacheDto> search(SearchParam searchParam) {
+    public Collection<ClassCacheVo> search(SearchParam searchParam) {
         return cacheStorage.search(searchParam, searchParam.getAppName());
     }
 

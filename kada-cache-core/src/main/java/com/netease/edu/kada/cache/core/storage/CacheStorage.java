@@ -1,9 +1,7 @@
 package com.netease.edu.kada.cache.core.storage;
 
-import com.netease.edu.kada.cache.core.core.duplicate.CacheAspectSupport;
-import com.netease.edu.kada.cache.core.dto.CacheKeyEntityDto;
-import com.netease.edu.kada.cache.core.dto.ClassCacheDto;
-import org.springframework.cache.Cache;
+import com.netease.edu.kada.cache.core.vo.CacheKeyVo;
+import com.netease.edu.kada.cache.core.vo.ClassCacheVo;
 
 import java.util.Collection;
 
@@ -13,12 +11,18 @@ import java.util.Collection;
  */
 public interface CacheStorage {
 
-    Collection<ClassCacheDto> search(SearchParam searchParam, String appName);
+    Collection<ClassCacheVo> search(SearchParam searchParam, String appName);
 
     /**
      * 获取所有缓存
      */
-    Collection<ClassCacheDto> getAllCache(String appName);
+    Collection<ClassCacheVo> getAllCache(String appName);
+
+    /**
+     * 获取所有的项目
+     * @return 项目集合
+     */
+    Collection<String> getAllProject();
 
     /**
      * 删除缓存
@@ -27,7 +31,7 @@ public interface CacheStorage {
      * @param key       缓存key
      * @return 是否删除成功
      */
-    void removeCacheName(String cacheName, String key, String appName);
+    boolean removeCacheName(String cacheName, String key, String appName);
 
     /**
      * 获取cacheConfig配置的cacheName下的所有key
@@ -35,7 +39,7 @@ public interface CacheStorage {
      * @param cacheName cacheConfig配置的cacheName
      * @return keys
      */
-    Collection<CacheKeyEntityDto> findCacheKeys(String cacheName, String appName);
+    Collection<CacheKeyVo> findCacheKeys(String cacheName, String appName);
 
     /**
      * 删除对应类的key的缓存
@@ -44,6 +48,6 @@ public interface CacheStorage {
      * @param key       缓存的key
      * @return
      */
-    void removeClassName(String className, String key, String appName);
+    boolean removeClassName(String className, String key, String appName);
 
 }

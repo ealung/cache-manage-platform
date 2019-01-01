@@ -1,4 +1,4 @@
-package com.netease.edu.kada.cache.core.dto;
+package com.netease.edu.kada.cache.core.vo;
 
 import lombok.Data;
 import org.springframework.cache.interceptor.CacheOperation;
@@ -12,15 +12,16 @@ import java.util.Set;
  * @since 2018/10/16 11:18.
  */
 @Data
-public class CacheMethodDto implements Serializable{
-    public CacheMethodDto() {
+public class CacheMethodVo implements Serializable {
+    public CacheMethodVo() {
     }
 
-    public CacheMethodDto(String methodName) {
+    public CacheMethodVo(String methodName) {
         this.methodName = methodName;
     }
+
     private String methodName;
     private CacheOperation cacheOperation;
-    private Collection<CacheManagerDto> cacheManagerDtos;
+    private Collection<CacheManagerVo> cacheManagerDtos;
 
 }

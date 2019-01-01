@@ -17,5 +17,5 @@ public class CacheManageDto {
     String className;
     String methodName;
     String cacheConfigKey;
-    Collection<ClassCacheDto> cacheConfig;
+    //Collection<ClassCacheDto> cacheConfig;
 }

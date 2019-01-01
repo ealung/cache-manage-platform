@@ -2,6 +2,7 @@ package com.netease.edu.kada.cache.repository;
 
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 
@@ -16,10 +17,10 @@ public interface CacheKeyRepository extends CrudRepository<CacheKeyEntity, Long>
     Iterable<CacheKeyEntity> findByCacheKeyAndAppName(String key, String appName);
 
     Iterable<CacheKeyEntity> findByCacheKeyLikeAndAppName(String key, String appName);
-
+    @Transactional
     void removeByCacheEntity_IdAndCacheKeyAndAppName(Long cacheEntityId, String key, String appName);
 
     Collection<CacheKeyEntity> findByCacheEntity_IdAndAppName(Long cacheEntityId, String appName);
-
+    @Transactional
     int removeByCacheKeyAndAppName(String key, String appName);
 }

@@ -1,4 +1,4 @@
-package com.netease.edu.kada.cache.core.dto;
+package com.netease.edu.kada.cache.core.vo;
 
 import com.google.common.base.Strings;
 import org.springframework.cache.interceptor.CacheOperation;
@@ -11,19 +11,17 @@ import java.util.Map;
  * @author zhangchanglu
  * @since 2018/09/30 16:08.
  */
-public class ClassCacheDto {
+public class ClassCacheVo {
     //对应类
     private Class aClass;
     private String className;
-    private Collection<CacheMethodDto> cacheMethodDtos;
-    //类每个方法配置的缓存注解集合
-    //private Map<Method, Collection<CacheOperation>> cacheOperation;
+    private Collection<CacheMethodVo> cacheMethodDtos;
 
-    public ClassCacheDto(Class aClass,Collection<CacheMethodDto> cacheMethodDtos) {
+    public ClassCacheVo(Class aClass,Collection<CacheMethodVo> cacheMethodDtos) {
         this.aClass = aClass;
         this.cacheMethodDtos = cacheMethodDtos;
     }
-    public ClassCacheDto(Collection<CacheMethodDto> cacheMethodDtos) {
+    public ClassCacheVo(Collection<CacheMethodVo> cacheMethodDtos) {
         this.cacheMethodDtos = cacheMethodDtos;
     }
 
@@ -35,11 +33,11 @@ public class ClassCacheDto {
         this.aClass = aClass;
     }
 
-    public Collection<CacheMethodDto> getCacheMethodDtos() {
+    public Collection<CacheMethodVo> getCacheMethodDtos() {
         return cacheMethodDtos;
     }
 
-    public void setCacheMethodDtos(Collection<CacheMethodDto> cacheMethodDtos) {
+    public void setCacheMethodDtos(Collection<CacheMethodVo> cacheMethodDtos) {
         this.cacheMethodDtos = cacheMethodDtos;
     }
 

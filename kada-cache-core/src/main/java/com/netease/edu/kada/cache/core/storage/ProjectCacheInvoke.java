@@ -1,8 +1,6 @@
 package com.netease.edu.kada.cache.core.storage;
 
-import com.netease.edu.kada.cache.core.dto.ClassCacheDto;
-
-import java.util.Collection;
+import com.netease.edu.kada.cache.core.dto.CacheProjectDto;
 
 /**
  * 当前依赖的项目缓存调用
@@ -14,20 +12,15 @@ public interface ProjectCacheInvoke {
     /**
      * 所有缓存配置
      *
-     * @param cacheConfig 缓存配置集合
+     * @param cacheProjectDto 缓存配置集合
      */
-    default void allCacheConfig(Collection<ClassCacheDto> cacheConfig, String appName) {
-    }
+    void allCacheConfig(CacheProjectDto cacheProjectDto);
 
-    default void afterCacheEvict(String cacheName, Object key, String appName) {
-    }
+    void afterCacheEvict(String cacheName, String key, String appName);
 
-    default void afterCacheGet(String cacheName, Object key, String appName) {
-    }
+    void afterCacheGet(String cacheName, String key, String appName);
 
-    default void afterClear(String cacheName, String appName) {
-    }
+    void afterClear(String cacheName, String appName);
 
-    default void afterCachePut(String cacheName, Object key, String className, String methodName, String cacheConfigKey, String appName) {
-    }
+    void afterCachePut(String cacheName, String key, String className, String methodName, String cacheConfigKey, String appName);
 }

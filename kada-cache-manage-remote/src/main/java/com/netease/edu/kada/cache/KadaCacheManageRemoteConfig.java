@@ -1,7 +1,6 @@
 package com.netease.edu.kada.cache;
 
-import com.netflix.client.config.IClientConfig;
-import com.netflix.loadbalancer.*;
+import com.netflix.loadbalancer.IRule;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.support.SimpleCacheManager;
@@ -22,8 +21,6 @@ public class KadaCacheManageRemoteConfig {
 
     @Bean
     public IRule cacheRule() {
-        return new RandomRule() {
-
-        };
+        return new CacheManageRandomRule();
     }
 }

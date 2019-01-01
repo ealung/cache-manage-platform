@@ -4,13 +4,14 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.netease.edu.kada.cache.core.config.CacheWebProperties;
-import com.netease.edu.kada.cache.core.dto.CacheKeyEntityDto;
-import com.netease.edu.kada.cache.core.dto.CacheManagerDto;
-import com.netease.edu.kada.cache.core.dto.CacheMethodDto;
-import com.netease.edu.kada.cache.core.dto.ClassCacheDto;
+import com.netease.edu.kada.cache.core.dto.*;
 import com.netease.edu.kada.cache.core.storage.CacheStorage;
 import com.netease.edu.kada.cache.core.storage.ProjectCacheInvoke;
 import com.netease.edu.kada.cache.core.storage.SearchParam;
+import com.netease.edu.kada.cache.core.vo.CacheKeyVo;
+import com.netease.edu.kada.cache.core.vo.CacheManagerVo;
+import com.netease.edu.kada.cache.core.vo.CacheMethodVo;
+import com.netease.edu.kada.cache.core.vo.ClassCacheVo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -43,31 +44,36 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
     private CacheManager cacheManager;
 
     @Override
-    public Collection<ClassCacheDto> search(SearchParam searchParam, String appName) {
+    public Collection<String> getAllProject() {
+        return null;
+    }
+
+    @Override
+    public Collection<ClassCacheVo> search(SearchParam searchParam, String appName) {
         //cacheName视图模式
         if (!Objects.isNull(searchParam.getModel()) && searchParam.getModel().equals(2)) {
             return searchForCacheName(searchParam, appName);
         }
         //类视图模式
-        Multimap<String, CacheMethodDto> classCache = ArrayListMultimap.create();
+        Multimap<String, CacheMethodVo> classCache = ArrayListMultimap.create();
         if (!Strings.isNullOrEmpty(searchParam.getClassName())) {
             Iterable<CacheEntity> allByClassName = cacheRepository.findAllByClassNameLikeAndAppName(getLike(searchParam.getClassName()), appName);
             allByClassName.forEach(cacheEntity -> {
-                CacheMethodDto cacheMethodDto = getCacheMethod(cacheEntity, appName);
+                CacheMethodVo cacheMethodDto = getCacheMethod(cacheEntity, appName);
                 classCache.put(cacheEntity.getClassName(), cacheMethodDto);
             });
         } else if (!Strings.isNullOrEmpty(searchParam.getCacheName())) {
             Collection<CacheNameEntity> byCacheNameLike = cacheNameRepository.findByCacheNameLikeAndAppName(getLike(searchParam.getCacheName()), appName);
             byCacheNameLike.forEach(cacheNameEntity -> {
                 CacheEntity cacheEntity = cacheNameEntity.getCacheEntity();
-                CacheMethodDto cacheMethodDto = getCacheMethod(cacheEntity, appName);
+                CacheMethodVo cacheMethodDto = getCacheMethod(cacheEntity, appName);
                 classCache.put(cacheEntity.getClassName(), cacheMethodDto);
             });
         } else if (!Strings.isNullOrEmpty(searchParam.getCacheKey())) {
             Iterable<CacheKeyEntity> byKeyLike = cacheKeyRepository.findByCacheKeyLikeAndAppName(getLike(searchParam.getCacheKey()), appName);
             byKeyLike.forEach(cacheKeyEntity -> {
                 CacheEntity cacheEntity = cacheKeyEntity.getCacheEntity();
-                CacheMethodDto cacheMethodDto = getCacheMethod(cacheEntity, appName);
+                CacheMethodVo cacheMethodDto = getCacheMethod(cacheEntity, appName);
                 classCache.put(cacheEntity.getClassName(), cacheMethodDto);
             });
         } else {
@@ -82,8 +88,8 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
      * @param searchParam 查询条件
      * @return 查询结果
      */
-    private Collection<ClassCacheDto> searchForCacheName(SearchParam searchParam, String appName) {
-        Multimap<String, CacheMethodDto> classCache = ArrayListMultimap.create();
+    private Collection<ClassCacheVo> searchForCacheName(SearchParam searchParam, String appName) {
+        Multimap<String, CacheMethodVo> classCache = ArrayListMultimap.create();
         Collection<CacheNameEntity> all = new ArrayList<>();
         if (!Strings.isNullOrEmpty(searchParam.getClassName())) {
             Iterable<CacheEntity> allByClassName = cacheRepository.findAllByClassNameLikeAndAppName(getLike(searchParam.getClassName()), appName);
@@ -105,7 +111,7 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
         }
         for (CacheNameEntity cacheNameEntity : all) {
             CacheEntity cacheEntity = cacheNameEntity.getCacheEntity();
-            CacheMethodDto cacheMethodDto = getCacheMethod(cacheEntity, appName);
+            CacheMethodVo cacheMethodDto = getCacheMethod(cacheEntity, appName);
             classCache.put(cacheNameEntity.getCacheName(), cacheMethodDto);
         }
         return getClassCache(classCache.asMap());
@@ -116,51 +122,49 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
         return "%" + param + "%";
     }
 
-    private Collection<ClassCacheDto> getClassCache(Map<String, Collection<CacheMethodDto>> map) {
-        Collection<ClassCacheDto> classCacheDtos = new ArrayList<>();
+    private Collection<ClassCacheVo> getClassCache(Map<String, Collection<CacheMethodVo>> map) {
+        Collection<ClassCacheVo> classCacheDtos = new ArrayList<>();
         map.forEach((s, cacheMethodDtos) -> {
-            ClassCacheDto classCacheDto = new ClassCacheDto(cacheMethodDtos);
+            ClassCacheVo classCacheDto = new ClassCacheVo(cacheMethodDtos);
             classCacheDto.setClassName(s);
             classCacheDtos.add(classCacheDto);
         });
         return classCacheDtos;
     }
 
-    private CacheMethodDto getCacheMethod(CacheEntity cacheEntity, String appName) {
-        CacheMethodDto cacheMethodDto = new CacheMethodDto();
+    private CacheMethodVo getCacheMethod(CacheEntity cacheEntity, String appName) {
+        CacheMethodVo cacheMethodDto = new CacheMethodVo();
         cacheMethodDto.setMethodName(cacheEntity.getMethodName());
         cacheMethodDto.setCacheManagerDtos(cacheManagerDtos(cacheEntity, appName));
         return cacheMethodDto;
     }
 
     @Override
-    public void allCacheConfig(Collection<ClassCacheDto> cacheConfig, String appName) {
+    public void allCacheConfig(CacheProjectDto cacheProjectDto) {
+        String appName = cacheProjectDto.getAppName();
         if (cacheWebProperties.getWebEnable()) {
             Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    for (ClassCacheDto classCacheDto : cacheConfig) {
-                        log.info("load cache class {}", classCacheDto.getClassName());
-                        for (CacheMethodDto cacheMethodDto : classCacheDto.getCacheMethodDtos()) {
-                            CacheOperation cacheOperation = cacheMethodDto.getCacheOperation();
-                            CacheEntity cacheEntity = new CacheEntity();
-                            cacheEntity.setAppName(appName);
-                            cacheEntity.setClassName(classCacheDto.getClassName());
-                            cacheEntity.setMethodName(cacheMethodDto.getMethodName());
-                            cacheEntity.setCacheConfigKey(cacheOperation.getKey());
-                            cacheEntity.setCacheOperation(cacheOperation.getClass().getSimpleName());
-                            CacheEntity allByClassNameAndMethodNameAndCacheConfigKey = cacheRepository.findAllByClassNameAndMethodNameAndCacheConfigKeyAndAppName(classCacheDto.getClassName(), cacheMethodDto.getMethodName(), cacheOperation.getKey(), appName);
-                            if (!Objects.isNull(allByClassNameAndMethodNameAndCacheConfigKey)) {
-                                continue;
-                            }
-                            cacheRepository.save(cacheEntity);
-                            for (String s : cacheOperation.getCacheNames()) {
-                                CacheNameEntity cacheNameEntity = new CacheNameEntity();
-                                cacheNameEntity.setCacheName(s);
-                                cacheNameEntity.setAppName(appName);
-                                cacheNameEntity.setCacheEntity(cacheEntity);
-                                cacheNameRepository.save(cacheNameEntity);
-                            }
+                    Collection<CacheDto> cacheDtos = cacheProjectDto.getCacheDtos();
+                    for (CacheDto cacheDto : cacheDtos) {
+                        CacheEntity cacheEntity = new CacheEntity();
+                        cacheEntity.setAppName(appName);
+                        cacheEntity.setClassName(cacheDto.getClassName());
+                        cacheEntity.setMethodName(cacheDto.getMethodName());
+                        cacheEntity.setCacheConfigKey(cacheDto.getCacheConfigKey());
+                        cacheEntity.setCacheOperation(cacheDto.getCacheOperation());
+                        CacheEntity allByClassNameAndMethodNameAndCacheConfigKey = cacheRepository.findAllByClassNameAndMethodNameAndCacheConfigKeyAndAppName(cacheDto.getClassName(), cacheDto.getMethodName(), cacheDto.getCacheConfigKey(), appName);
+                        if (!Objects.isNull(allByClassNameAndMethodNameAndCacheConfigKey)) {
+                            continue;
+                        }
+                        cacheRepository.save(cacheEntity);
+                        for (CacheNameDto cacheNameDto : cacheDto.getCacheNameDtos()) {
+                            CacheNameEntity cacheNameEntity = new CacheNameEntity();
+                            cacheNameEntity.setCacheName(cacheNameDto.getCacheName());
+                            cacheNameEntity.setAppName(appName);
+                            cacheNameEntity.setCacheEntity(cacheEntity);
+                            cacheNameRepository.save(cacheNameEntity);
                         }
                     }
                     log.info("load cache class finish");
@@ -171,10 +175,10 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
     }
 
     @Override
-    public Collection<ClassCacheDto> getAllCache(String appName) {
-        Multimap<String, CacheMethodDto> classCache = ArrayListMultimap.create();
+    public Collection<ClassCacheVo> getAllCache(String appName) {
+        Multimap<String, CacheMethodVo> classCache = ArrayListMultimap.create();
         for (CacheEntity cacheEntity : cacheRepository.findAllByAppName(appName)) {
-            CacheMethodDto cacheMethodDto = new CacheMethodDto();
+            CacheMethodVo cacheMethodDto = new CacheMethodVo();
             cacheMethodDto.setMethodName(cacheEntity.getMethodName());
             cacheMethodDto.setCacheManagerDtos(cacheManagerDtos(cacheEntity, appName));
             classCache.put(cacheEntity.getClassName(), cacheMethodDto);
@@ -182,9 +186,9 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
         return getClassCache(classCache.asMap());
     }
 
-    private Collection<CacheManagerDto> cacheManagerDtos(CacheEntity cacheEntity, String appName) {
-        Collection<CacheManagerDto> cacheManagerDtos = new ArrayList<>();
-        CacheManagerDto cacheManagerDto = new CacheManagerDto();
+    private Collection<CacheManagerVo> cacheManagerDtos(CacheEntity cacheEntity, String appName) {
+        Collection<CacheManagerVo> cacheManagerDtos = new ArrayList<>();
+        CacheManagerVo cacheManagerDto = new CacheManagerVo();
         cacheManagerDto.setCacheConfigKey(cacheEntity.getCacheConfigKey());
         cacheManagerDto.setCacheOperation(cacheEntity.getCacheOperation());
         cacheManagerDto.setClassName(cacheEntity.getClassName());
@@ -199,13 +203,13 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
     }
 
     @Override
-    public Collection<CacheKeyEntityDto> findCacheKeys(String cacheName, String appName) {
-        Collection<CacheKeyEntityDto> allKey = new ArrayList<>();
+    public Collection<CacheKeyVo> findCacheKeys(String cacheName, String appName) {
+        Collection<CacheKeyVo> allKey = new ArrayList<>();
         Collection<CacheNameEntity> byCacheName = cacheNameRepository.findByCacheNameAndAppName(cacheName, appName);
         byCacheName.forEach(cacheNameEntity -> {
             Collection<CacheKeyEntity> byCacheEntity_idAndAppName = cacheKeyRepository.findByCacheEntity_IdAndAppName(cacheNameEntity.getCacheEntity().getId(), appName);
             for (CacheKeyEntity cacheKeyEntity : byCacheEntity_idAndAppName) {
-                CacheKeyEntityDto cacheKeyEntityDto = new CacheKeyEntityDto();
+                CacheKeyVo cacheKeyEntityDto = new CacheKeyVo();
                 BeanUtils.copyProperties(cacheKeyEntity, cacheKeyEntityDto);
                 allKey.add(cacheKeyEntityDto);
             }
@@ -214,7 +218,7 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
     }
 
     @Override
-    public void removeCacheName(String cacheName, String key, String appName) {
+    public boolean removeCacheName(String cacheName, String key, String appName) {
         cacheNameRepository.findByCacheNameAndAppName(cacheName, appName).forEach(cacheNameEntity -> {
             if (Strings.isNullOrEmpty(key)) {
                 for (CacheKeyEntity cacheKeyEntity : cacheKeyRepository.findByCacheEntity_IdAndAppName(cacheNameEntity.getCacheEntity().getId(), appName)) {
@@ -232,10 +236,11 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
                 cache.clear();
             }
         }
+        return true;
     }
 
     @Override
-    public void removeClassName(String className, String key, String appName) {
+    public boolean removeClassName(String className, String key, String appName) {
         cacheRepository.findAllByClassNameAndAppName(className, appName).forEach(cacheEntity -> {
             Collection<CacheNameEntity> byCacheEntity_idAndAppName = cacheNameRepository.findByCacheEntity_IdAndAppName(cacheEntity.getId(), appName);
             for (CacheNameEntity cacheNameEntity : byCacheEntity_idAndAppName) {
@@ -255,6 +260,7 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
                 }
             }
         });
+        return true;
     }
 
     @Override
@@ -268,8 +274,8 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
 
     @Override
     @Transactional
-    public synchronized void afterCacheEvict(String cacheName, Object key, String appName) {
-        for (CacheKeyEntity cacheKeyEntity : cacheKeyRepository.findByCacheKeyAndAppName(key.toString(), appName)) {
+    public synchronized void afterCacheEvict(String cacheName, String key, String appName) {
+        for (CacheKeyEntity cacheKeyEntity : cacheKeyRepository.findByCacheKeyAndAppName(key, appName)) {
             for (CacheNameEntity cacheNameEntity : cacheNameRepository.findByCacheEntity_IdAndAppName(cacheKeyEntity.getCacheEntity().getId(), appName)) {
                 Cache cache = cacheManager.getCache(cacheNameEntity.getCacheName());
                 if (!Objects.isNull(cache)) {
@@ -277,23 +283,23 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
                 }
             }
         }
-        cacheKeyRepository.removeByCacheKeyAndAppName(key.toString(), appName);
+        cacheKeyRepository.removeByCacheKeyAndAppName(key, appName);
     }
 
     @Override
-    public void afterCachePut(String cacheName, Object key, String className, String methodName, String cacheConfigKey, String appName) {
+    public void afterCachePut(String cacheName, String key, String className, String methodName, String cacheConfigKey, String appName) {
         CacheEntity cacheEntity = cacheRepository.findAllByClassNameAndMethodNameAndCacheConfigKeyAndAppName(className, methodName, cacheConfigKey, appName);
         if (null != cacheEntity) {
-            Collection<CacheKeyEntity> byCacheKeyAndCacheEntity_idAndAppName = cacheKeyRepository.findByCacheKeyAndCacheEntity_IdAndAppName(key.toString(), cacheEntity.getId(), appName);
+            Collection<CacheKeyEntity> byCacheKeyAndCacheEntity_idAndAppName = cacheKeyRepository.findByCacheKeyAndCacheEntity_IdAndAppName(key, cacheEntity.getId(), appName);
             if (CollectionUtils.isEmpty(byCacheKeyAndCacheEntity_idAndAppName)) {
-                saveCacheKeyEntity(key.toString(), cacheEntity, appName);
+                saveCacheKeyEntity(key, cacheEntity, appName);
             } else if (byCacheKeyAndCacheEntity_idAndAppName.size() > 1) {
                 //这里有可能部分key过期没能同步删除，造成多次缓存，暂时先清空再增加
                 log.warn("repetition cacheId:{} - key :{}", cacheEntity.getId(), key);
                 for (CacheKeyEntity keyEntity : byCacheKeyAndCacheEntity_idAndAppName) {
                     cacheKeyRepository.delete(keyEntity);
                 }
-                saveCacheKeyEntity(key.toString(), cacheEntity, appName);
+                saveCacheKeyEntity(key, cacheEntity, appName);
             }
         }
     }
@@ -307,7 +313,7 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
     }
 
     @Override
-    public void afterCacheGet(String cacheName, Object key, String appName) {
+    public void afterCacheGet(String cacheName, String key, String appName) {
 
     }
 }

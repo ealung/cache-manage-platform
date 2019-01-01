@@ -87,6 +87,7 @@ public abstract class AbstractCacheInvoker {
         try {
             Cache.ValueWrapper valueWrapper = cache.get(key);
             for (NetEaseCacheHandler netEaseCacheHandler : getNetEaseCacheHandlers()) {
+
                 netEaseCacheHandler.afterCacheGet(cache, key, context);
             }
             return valueWrapper;

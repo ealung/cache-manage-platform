@@ -11,6 +11,7 @@
 </header>
 <title>缓存管理</title>
 <body>
+<input type="hidden" id="appName" value="${appName}">
 <div class="panel panel-default">
     <div class="panel-body">
         <ul class="nav nav-tabs" id="model">
@@ -51,7 +52,7 @@
                                         <label>{{cacheKey}} <span style="color: #ff175a;cursor:pointer"
                                                                   class="glyphicon glyphicon-minus"
                                                                   aria-hidden="true"
-                                                                  @click="removeKey(cacheKey)"></span></label>
+                                                                  @click="removeKey(cacheManagerDto.cacheNames,cacheKey)"></span></label>
                                     </li>
                                 </ul>
                             </li>
@@ -66,21 +67,24 @@
 <script>
     function search() {
         var val = $("#model").find("li[class=active]").val();
+        var appName = $("#appName").val();
         var data;
         if (val === 1) {
             data = {
                 className: $("#searchText").val(),
+                appName: appName,
                 model: val
             }
         } else {
             data = {
                 cacheName: $("#searchText").val(),
+                appName: appName,
                 model: val
             }
         }
         $.ajax({
-            type: 'POST',
-            url: "/cache/manager/search",
+            type: 'GET',
+            url: "/kada/cache/manage/search",
             data: data,
             success: function (data) {
                 cache.$data.caches = data;
@@ -97,20 +101,22 @@
     var cache;
     $(document).ready(function () {
         $.ajax({
-            type: 'POST',
-            url: "/cache/manager/all",
-            data: $("#searchText").val(),
+            type: 'GET',
+            url: "/kada/cache/manage/project/all",
+            data: {appName: $("#appName").val()},
             success: function (data) {
                 cache = new Vue({
                     el: '#cache',
                     data: {caches: data},
                     methods: {
-                        removeKey(rkey) {
+                        removeKey(cacheName,rkey) {
                             $.ajax({
                                 type: 'POST',
-                                url: "/cache/manager/remove",
+                                url: "/kada/cache/manage/remove",
                                 data: {
-                                    key: rkey
+                                    key: rkey,
+                                    appName: $("#appName").val(),
+                                    cacheName:cacheName
                                 },
                                 success: function () {
                                     alert("操作成功.");
@@ -119,17 +125,19 @@
                                     if (val === 1) {
                                         param = {
                                             className: $("#searchText").val(),
+                                            appName: $("#appName").val(),
                                             model: val
                                         }
                                     } else {
                                         param = {
                                             cacheName: $("#searchText").val(),
+                                            appName: $("#appName").val(),
                                             model: val
                                         }
                                     }
                                     $.ajax({
-                                        type: 'POST',
-                                        url: "/cache/manager/search",
+                                        type: 'GET',
+                                        url: "/kada/cache/manage/search",
                                         data: param,
                                         success: function (data) {
                                             cache.$data.caches = data;
@@ -144,9 +152,10 @@
                             var val = $("#model").find("li[class=active]").val();
                             $.ajax({
                                 type: 'POST',
-                                url: "/cache/manager/remove/cacheName",
+                                url: "/kada/cache/manage/remove/cacheName",
                                 data: {
                                     className: rkey,
+                                    appName: $("#appName").val(),
                                     model: val
                                 },
                                 success: function () {
@@ -155,17 +164,19 @@
                                     if (val === 1) {
                                         param = {
                                             className: $("#searchText").val(),
+                                            appName: $("#appName").val(),
                                             model: val
                                         }
                                     } else {
                                         param = {
                                             cacheName: $("#searchText").val(),
+                                            appName: $("#appName").val(),
                                             model: val
                                         }
                                     }
                                     $.ajax({
-                                        type: 'POST',
-                                        url: "/cache/manager/search",
+                                        type: 'GET',
+                                        url: "/kada/cache/manage/search",
                                         data: param,
                                         success: function (data) {
                                             cache.$data.caches = data;

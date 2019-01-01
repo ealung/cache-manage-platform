@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class NetEaseCacheManagementHandler implements NetEaseCacheHandler {
     private ProjectCacheInvoke projectCacheInvoke;
-    @Value("${cache.app.name:cacheApp}")
+    @Value("${cache.manage.appName:cacheApp}")
     private String appName;
 
     @Override
@@ -37,7 +37,7 @@ public class NetEaseCacheManagementHandler implements NetEaseCacheHandler {
     @Override
     public void afterCacheGet(Cache cache, Object key, CacheAspectSupport.CacheOperationContext cacheOperationContext) {
         try {
-            projectCacheInvoke.afterCacheGet(cache.getName(), key, appName);
+            projectCacheInvoke.afterCacheGet(cache.getName(), key.toString(), appName);
         } catch (Exception e) {
             log.warn("projectCacheInvoke.afterCacheGet fail", e);
         }
@@ -46,7 +46,7 @@ public class NetEaseCacheManagementHandler implements NetEaseCacheHandler {
     @Override
     public void afterCacheEvict(Cache cache, Object key, CacheAspectSupport.CacheOperationContext cacheOperationContext) {
         try {
-            projectCacheInvoke.afterCacheEvict(cache.getName(), key, appName);
+            projectCacheInvoke.afterCacheEvict(cache.getName(),  key.toString(), appName);
         } catch (Exception e) {
             log.warn("projectCacheInvoke.afterCacheEvict fail", e);
         }
@@ -58,7 +58,7 @@ public class NetEaseCacheManagementHandler implements NetEaseCacheHandler {
             String className = cacheOperationContext.getTarget().getClass().getName();
             String methodName = cacheOperationContext.getMethod().getName();
             CacheOperation cacheOperation = cacheOperationContext.getOperation();
-            projectCacheInvoke.afterCachePut(cache.getName(), key, className, methodName, cacheOperation.getKey(), appName);
+            projectCacheInvoke.afterCachePut(cache.getName(),  key.toString(), className, methodName, cacheOperation.getKey(), appName);
         } catch (Exception e) {
             log.warn("projectCacheInvoke.afterCachePut fail", e);
         }

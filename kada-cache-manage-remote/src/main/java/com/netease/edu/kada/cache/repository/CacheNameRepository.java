@@ -16,5 +16,5 @@ public interface CacheNameRepository extends CrudRepository<CacheNameEntity, Lon
 
     Collection<CacheNameEntity> findByCacheNameAndAppName(String cacheName, String appName);
 
-    Collection<CacheNameEntity> findByCacheEntity_IdAndAppName(Long cacheEntiy_id, String appName);
+    CacheNameEntity findByCacheEntity_IdAndAppName(Long cacheEntiy_id, String appName);
 }
