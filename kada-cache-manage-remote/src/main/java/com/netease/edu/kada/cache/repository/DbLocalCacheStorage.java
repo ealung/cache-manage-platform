@@ -183,11 +183,11 @@ public class DbLocalCacheStorage implements CacheStorage {
             cacheNameRepository.findByCacheNameAndAppName(cacheName, appName).forEach(cacheNameEntity -> {
                 if (Strings.isNullOrEmpty(key)) {
                     for (CacheKeyEntity cacheKeyEntity : cacheKeyRepository.findByCacheEntity_IdAndAppName(cacheNameEntity.getCacheEntity().getId(), appName)) {
-                        cacheManageClientService.cacheEvict(cacheName, key);
+                        cacheManageClientService.cacheEvict(appName, cacheName, key);
                         cacheKeyRepository.delete(cacheKeyEntity);
                     }
                 } else {
-                    cacheManageClientService.cacheEvict(cacheName, key);
+                    cacheManageClientService.cacheEvict(appName, cacheName, key);
                     cacheKeyRepository.removeByCacheEntity_IdAndCacheKeyAndAppName(cacheNameEntity.getCacheEntity().getId(), key, appName);
                 }
             });
@@ -205,11 +205,11 @@ public class DbLocalCacheStorage implements CacheStorage {
                 CacheNameEntity cacheNameEntity = cacheNameRepository.findByCacheEntity_IdAndAppName(cacheEntity.getId(), appName);
                 if (Strings.isNullOrEmpty(key)) {
                     for (CacheKeyEntity cacheKeyEntity : cacheKeyRepository.findByCacheEntity_IdAndAppName(cacheEntity.getId(), appName)) {
-                        cacheManageClientService.cacheEvict(cacheNameEntity.getCacheName(), cacheKeyEntity.getCacheKey());
+                        cacheManageClientService.cacheEvict(appName, cacheNameEntity.getCacheName(), cacheKeyEntity.getCacheKey());
                         cacheKeyRepository.delete(cacheKeyEntity);
                     }
                 } else {
-                    cacheManageClientService.cacheEvict(cacheNameEntity.getCacheName(), key);
+                    cacheManageClientService.cacheEvict(appName, cacheNameEntity.getCacheName(), key);
                     cacheKeyRepository.removeByCacheEntity_IdAndCacheKeyAndAppName(cacheEntity.getId(), key, appName);
                 }
             });
