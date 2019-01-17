@@ -69,9 +69,10 @@ public class CacheManageRandomRule extends RandomRule {
     }
 
     public List<Server> getCacheClient(List<Server> list, String cacheName) {
-        return list.stream().filter(server -> {
+        return list;
+        /*return list.stream().filter(server -> {
             String s = ((DiscoveryEnabledServer) server).getInstanceInfo().getMetadata().get("cacheName");
             return cacheName.equals(s);
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toList());*/
     }
 }
