@@ -9,7 +9,6 @@ import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.cloud.netflix.ribbon.SpringClientFactory;
 import org.springframework.cloud.openfeign.ribbon.CacheLoadBalancerFeignClient;
 import org.springframework.cloud.openfeign.ribbon.CachingManagerSpringLoadBalancerFactory;
-import org.springframework.cloud.openfeign.ribbon.CachingSpringLoadBalancerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;

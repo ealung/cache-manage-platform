@@ -20,6 +20,7 @@ public class CacheLoadBalancerFeignClient extends LoadBalancerFeignClient {
     private final Client delegate;
     private CachingManagerSpringLoadBalancerFactory lbClientFactory;
     private final String CACHE_APP_NAME = "cacheAppName";
+    public static final String CACHE_SERVICE_NAME = "cache.manage.client";
 
     public CacheLoadBalancerFeignClient(Client delegate, CachingManagerSpringLoadBalancerFactory lbClientFactory, SpringClientFactory clientFactory) {
         super(delegate, lbClientFactory, clientFactory);
@@ -31,9 +32,14 @@ public class CacheLoadBalancerFeignClient extends LoadBalancerFeignClient {
     public Response execute(Request request, Request.Options options) throws IOException {
         try {
             URI asUri = URI.create(request.url());
+            String cacheAppName = getCacheAppName(asUri);
             String clientName = asUri.getHost();
+            if (clientName.equals(CACHE_SERVICE_NAME)) {
+                String newUrl = request.url().replace(clientName, cacheAppName);
+                request = Request.create(request.method(), newUrl, request.headers(), request.body(), request.charset());
+                return execute(request, options);
+            }
             URI uriWithoutHost = cleanUrl(request.url(), clientName);
-            String cacheAppName = getCacheAppName(uriWithoutHost);
             CacheManageRibbonRequest ribbonRequest = new CacheManageRibbonRequest(
                     this.delegate, request, uriWithoutHost, cacheAppName);
             IClientConfig requestConfig = getClientConfig(options, clientName);
