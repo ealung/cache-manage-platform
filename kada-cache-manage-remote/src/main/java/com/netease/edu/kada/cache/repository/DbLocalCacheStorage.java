@@ -157,6 +157,9 @@ public class DbLocalCacheStorage implements CacheStorage {
             cacheManagerDto.setCacheKeys(collect);
         }
         CacheNameEntity cacheNameEntities = cacheNameRepository.findByCacheEntity_IdAndAppName(cacheEntity.getId(), appName);
+        if (Objects.isNull(cacheNameEntities)) {
+            return cacheManagerDtos;
+        }
         cacheManagerDto.setCacheNames(cacheNameEntities.getCacheName());
         cacheManagerDtos.add(cacheManagerDto);
         return cacheManagerDtos;
