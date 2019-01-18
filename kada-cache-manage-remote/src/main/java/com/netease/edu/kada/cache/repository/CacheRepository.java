@@ -1,9 +1,10 @@
 package com.netease.edu.kada.cache.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
-
 import java.util.Collection;
 
 /**
@@ -15,13 +16,11 @@ public interface CacheRepository extends CrudRepository<CacheEntity, Long> {
     @Query("select t.appName as goods from CacheEntity t group by t.appName")
     Collection<String> findAllGroupByAppName();
 
-    Iterable<CacheEntity> findAllByAppName(String appName);
+    Page<CacheEntity> findAllByAppName(String appName, Pageable pageable);
 
     Iterable<CacheEntity> findAllByClassNameAndAppName(String className, String appName);
 
-    Iterable<CacheEntity> findAllByClassNameLikeAndAppName(String className, String appName);
-
-    Iterable<CacheEntity> findAllByClassNameAndMethodNameAndAppName(String className, String methodName, String appName);
+    Page<CacheEntity> findAllByClassNameLikeAndAppName(String className, String appName, Pageable pageable);
 
     CacheEntity findAllByClassNameAndMethodNameAndCacheConfigKeyAndAppName(String className, String methodName, String cacheConfigKey, String appName);
 

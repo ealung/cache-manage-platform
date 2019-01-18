@@ -10,6 +10,19 @@
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 </header>
 <title>缓存管理</title>
+<style>
+    .previous {
+        position: fixed;
+        top: 50%;
+        left: 0;
+    }
+
+    .next {
+        position: fixed;
+        top: 50%;
+        right: 0;
+    }
+</style>
 <body>
 <input type="hidden" id="appName" value="${appName}">
 <div class="panel panel-default">
@@ -29,42 +42,92 @@
     </div>
 </div>
 <div id="cache">
-    <div class="panel panel-default" v-for="classCache in caches">
-        <div class="panel-body">
-            <kbd>{{classCache.className}}</kbd>
-            <span style="color: #ff175a;cursor:pointer;float: right;" class="glyphicon glyphicon-trash"
-                  aria-hidden="true" @click="removeClassConfigName(classCache.className)"></span>
-        </div>
-        <div class="panel-footer">
-            <div v-for="cacheMethodDto in classCache.cacheMethodDtos">
-                <div class="panel panel-primary">
-                    <div class="panel-body">
-                        <label style="color: #1b809e;"><#> </label> {{cacheMethodDto.methodName}}
-                    </div>
-                    <div v-for="cacheManagerDto in cacheMethodDto.cacheManagerDtos">
-                        <ul>
-                            <li>
-                                <label style="color:#009999;">{{cacheManagerDto.cacheOperation}}</label>
-                                <label style="color:#990033;">&nbsp;&nbsp;{{cacheManagerDto.cacheConfigKey}}</label>
-                                <ul style="padding-left: 0px;" class="list-group"
-                                    v-for="cacheKey in cacheManagerDto.cacheKeys">
-                                    <li class="list-group-item">
-                                        <label>{{cacheKey}} <span style="color: #ff175a;cursor:pointer"
-                                                                  class="glyphicon glyphicon-minus"
-                                                                  aria-hidden="true"
-                                                                  @click="removeKey(cacheManagerDto.cacheNames,cacheKey)"></span></label>
+    <nav aria-label="...">
+        <ul class="pager">
+            <li class="previous disabled"><a href="#" onclick="upPage()"><span aria-hidden="true">&larr;</span> 上一页</a>
+            </li>
+            <li>
+
+            </li>
+            <li class="next"><a href="#" onclick="nextPage()">下一页 <span aria-hidden="true">&rarr;</span></a></li>
+        </ul>
+        <ul>
+            <div class="panel panel-default" v-for="classCache in caches.result">
+                <div class="panel-body">
+                    <kbd>{{classCache.className}}</kbd>
+                    <span style="color: #ff175a;cursor:pointer;float: right;" class="glyphicon glyphicon-trash"
+                          aria-hidden="true" @click="removeClassConfigName(classCache.className)"></span>
+                </div>
+                <div class="panel-footer">
+                    <div v-for="cacheMethodDto in classCache.cacheMethodDtos">
+                        <div class="panel panel-primary">
+                            <div class="panel-body">
+                                <label style="color: #1b809e;"><#> </label> {{cacheMethodDto.methodName}}
+                            </div>
+                            <div v-for="cacheManagerDto in cacheMethodDto.cacheManagerDtos">
+                                <ul>
+                                    <li>
+                                        <label style="color:#009999;">{{cacheManagerDto.cacheOperation}}</label>
+                                        <label style="color:#990033;">&nbsp;&nbsp;{{cacheManagerDto.cacheConfigKey}}</label>
+                                        <ul style="padding-left: 0px;" class="list-group"
+                                            v-for="cacheKey in cacheManagerDto.cacheKeys">
+                                            <li class="list-group-item">
+                                                <label>{{cacheKey}} <span style="color: #ff175a;cursor:pointer"
+                                                                          class="glyphicon glyphicon-minus"
+                                                                          aria-hidden="true"
+                                                                          @click="removeKey(cacheManagerDto.cacheNames,cacheKey)"></span></label>
+                                            </li>
+                                        </ul>
                                     </li>
                                 </ul>
-                            </li>
-                        </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+        </ul>
+    </nav>
 </div>
 </body>
 <script>
+    var index = 1;
+    var size = 10;
+    var hasNext = false;
+
+    function initPage() {
+        index = 1;
+        size = 10;
+        hasNext = false;
+    }
+
+    function upPage() {
+        if (index > 1) {
+            index -= 1;
+            search();
+        }
+    }
+
+    function nextPage() {
+        if (hasNext) {
+            index += 1;
+            search();
+        }
+    }
+
+    function afterLoadPage(page) {
+        if (!page.hasNext) {
+            $(".next").addClass("disabled");
+        } else {
+            $(".next").removeClass("disabled");
+        }
+        if (index === 1) {
+            $(".previous").addClass("disabled");
+        } else {
+            $(".previous").removeClass("disabled");
+        }
+        hasNext = page.hasNext;
+    }
+
     function search() {
         var val = $("#model").find("li[class=active]").val();
         var appName = $("#appName").val();
@@ -73,13 +136,17 @@
             data = {
                 className: $("#searchText").val(),
                 appName: appName,
-                model: val
+                model: val,
+                pageIndex: index,
+                pageSize: size
             }
         } else {
             data = {
                 cacheName: $("#searchText").val(),
                 appName: appName,
-                model: val
+                model: val,
+                pageIndex: index,
+                pageSize: size
             }
         }
         $.ajax({
@@ -88,12 +155,14 @@
             data: data,
             success: function (data) {
                 cache.$data.caches = data;
+                afterLoadPage(data);
             },
             dataType: "json"
         });
     }
 
     $("#model").find("li").click(function () {
+        initPage();
         $("#model").find("li").attr("class", "");
         $(this).attr("class", "active");
         $("#search").click();
@@ -109,18 +178,19 @@
                     el: '#cache',
                     data: {caches: data},
                     methods: {
-                        removeKey(cacheName,rkey) {
+                        removeKey(cacheName, rkey) {
                             $.ajax({
                                 type: 'POST',
                                 url: "/kada/cache/manage/remove",
                                 data: {
                                     key: rkey,
                                     appName: $("#appName").val(),
-                                    cacheName:cacheName
+                                    cacheName: cacheName
                                 },
                                 success: function () {
                                     alert("操作成功.");
-                                    var val = $("#model").find("li[class=active]").val();
+                                    search();
+                                   /* var val = $("#model").find("li[class=active]").val();
                                     var param;
                                     if (val === 1) {
                                         param = {
@@ -143,7 +213,7 @@
                                             cache.$data.caches = data;
                                         },
                                         dataType: "json"
-                                    });
+                                    });*/
                                 },
                                 dataType: "json"
                             });
@@ -160,7 +230,8 @@
                                 },
                                 success: function () {
                                     alert("操作成功.");
-                                    var param;
+                                    search();
+                                    /*var param;
                                     if (val === 1) {
                                         param = {
                                             className: $("#searchText").val(),
@@ -182,13 +253,14 @@
                                             cache.$data.caches = data;
                                         },
                                         dataType: "json"
-                                    });
+                                    });*/
                                 },
                                 dataType: "json"
                             });
                         }
                     }
-                })
+                });
+                afterLoadPage(data);
             },
             dataType: "json"
         });

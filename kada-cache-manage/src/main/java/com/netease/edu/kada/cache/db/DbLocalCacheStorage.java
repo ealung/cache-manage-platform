@@ -12,12 +12,15 @@ import com.netease.edu.kada.cache.core.vo.CacheKeyVo;
 import com.netease.edu.kada.cache.core.vo.CacheManagerVo;
 import com.netease.edu.kada.cache.core.vo.CacheMethodVo;
 import com.netease.edu.kada.cache.core.vo.ClassCacheVo;
+import com.netease.edu.kada.cache.core.utils.PageToPageInfoUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.interceptor.CacheOperation;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
@@ -49,16 +52,18 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
     }
 
     @Override
-    public Collection<ClassCacheVo> search(SearchParam searchParam, String appName) {
+    public PageInfo<ClassCacheVo> search(SearchParam searchParam, String appName, int pageIndex, int pageSize) {
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
+        Page<CacheEntity> allByClassNameLikeAndAppName = Page.empty(pageable);
         //cacheName视图模式
         if (!Objects.isNull(searchParam.getModel()) && searchParam.getModel().equals(2)) {
-            return searchForCacheName(searchParam, appName);
+            return searchForCacheName(searchParam, appName, pageable);
         }
         //类视图模式
         Multimap<String, CacheMethodVo> classCache = ArrayListMultimap.create();
         if (!Strings.isNullOrEmpty(searchParam.getClassName())) {
-            Iterable<CacheEntity> allByClassName = cacheRepository.findAllByClassNameLikeAndAppName(getLike(searchParam.getClassName()), appName);
-            allByClassName.forEach(cacheEntity -> {
+            allByClassNameLikeAndAppName = cacheRepository.findAllByClassNameLikeAndAppName(getLike(searchParam.getClassName()), appName, pageable);
+            allByClassNameLikeAndAppName.forEach(cacheEntity -> {
                 CacheMethodVo cacheMethodDto = getCacheMethod(cacheEntity, appName);
                 classCache.put(cacheEntity.getClassName(), cacheMethodDto);
             });
@@ -77,9 +82,9 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
                 classCache.put(cacheEntity.getClassName(), cacheMethodDto);
             });
         } else {
-            return getAllCache(appName);
+            return getAllCache(appName, pageIndex, pageSize);
         }
-        return getClassCache(classCache.asMap());
+        return PageToPageInfoUtils.convertTOPageInfo(getClassCache(classCache.asMap()), allByClassNameLikeAndAppName);
     }
 
     /**
@@ -88,11 +93,13 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
      * @param searchParam 查询条件
      * @return 查询结果
      */
-    private Collection<ClassCacheVo> searchForCacheName(SearchParam searchParam, String appName) {
+    private PageInfo<ClassCacheVo> searchForCacheName(SearchParam searchParam, String appName, Pageable pageable) {
         Multimap<String, CacheMethodVo> classCache = ArrayListMultimap.create();
         Collection<CacheNameEntity> all = new ArrayList<>();
+        Page<CacheEntity> page = Page.empty(pageable);
         if (!Strings.isNullOrEmpty(searchParam.getClassName())) {
-            Iterable<CacheEntity> allByClassName = cacheRepository.findAllByClassNameLikeAndAppName(getLike(searchParam.getClassName()), appName);
+            page = cacheRepository.findAllByClassNameLikeAndAppName(getLike(searchParam.getClassName()), appName, pageable);
+            Iterable<CacheEntity> allByClassName = page;
             for (CacheEntity cacheEntity : allByClassName) {
                 all.addAll(cacheNameRepository.findByCacheEntity_IdAndAppName(cacheEntity.getId(), appName));
             }
@@ -114,8 +121,7 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
             CacheMethodVo cacheMethodDto = getCacheMethod(cacheEntity, appName);
             classCache.put(cacheNameEntity.getCacheName(), cacheMethodDto);
         }
-        return getClassCache(classCache.asMap());
-
+        return PageToPageInfoUtils.convertTOPageInfo(getClassCache(classCache.asMap()), page);
     }
 
     private String getLike(String param) {
@@ -175,15 +181,17 @@ public class DbLocalCacheStorage implements CacheStorage, ProjectCacheInvoke {
     }
 
     @Override
-    public Collection<ClassCacheVo> getAllCache(String appName) {
+    public PageInfo<ClassCacheVo> getAllCache(String appName, int pageIndex, int pageSize) {
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
         Multimap<String, CacheMethodVo> classCache = ArrayListMultimap.create();
-        for (CacheEntity cacheEntity : cacheRepository.findAllByAppName(appName)) {
+        Page<CacheEntity> allByAppName = cacheRepository.findAllByAppName(appName, pageable);
+        for (CacheEntity cacheEntity : allByAppName) {
             CacheMethodVo cacheMethodDto = new CacheMethodVo();
             cacheMethodDto.setMethodName(cacheEntity.getMethodName());
             cacheMethodDto.setCacheManagerDtos(cacheManagerDtos(cacheEntity, appName));
             classCache.put(cacheEntity.getClassName(), cacheMethodDto);
         }
-        return getClassCache(classCache.asMap());
+        return PageToPageInfoUtils.convertTOPageInfo(getClassCache(classCache.asMap()), allByAppName);
     }
 
     private Collection<CacheManagerVo> cacheManagerDtos(CacheEntity cacheEntity, String appName) {

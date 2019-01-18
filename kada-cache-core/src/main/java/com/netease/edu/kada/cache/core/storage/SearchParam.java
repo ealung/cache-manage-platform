@@ -14,4 +14,6 @@ public class SearchParam {
     private String cacheKey;
     private String cacheOperation;
     private Integer model;
+    private int pageIndex;
+    private int pageSize;
 }

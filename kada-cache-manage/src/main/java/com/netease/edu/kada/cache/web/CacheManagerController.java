@@ -1,6 +1,7 @@
 package com.netease.edu.kada.cache.web;
 
 import com.netease.edu.kada.cache.core.config.CacheWebProperties;
+import com.netease.edu.kada.cache.core.dto.PageInfo;
 import com.netease.edu.kada.cache.core.storage.CacheStorage;
 import com.netease.edu.kada.cache.core.storage.ProjectCacheInvoke;
 import com.netease.edu.kada.cache.core.storage.SearchParam;
@@ -27,14 +28,14 @@ public class CacheManagerController {
 
     @RequestMapping("/com/netease/edu/kada/cache/core/manager/all")
     @ResponseBody
-    public Collection<ClassCacheVo> allCache(String appName) {
-        return cacheStorage.getAllCache(appName);
+    public PageInfo<ClassCacheVo> allCache(String appName, int pageIndex, int pageSize) {
+        return cacheStorage.getAllCache(appName, pageIndex, pageSize);
     }
 
     @RequestMapping("/com/netease/edu/kada/cache/core/manager/search")
     @ResponseBody
-    public Collection<ClassCacheVo> search(SearchParam searchParam) {
-        return cacheStorage.search(searchParam, searchParam.getAppName());
+    public PageInfo<ClassCacheVo> search(SearchParam searchParam) {
+        return cacheStorage.search(searchParam, searchParam.getAppName(), searchParam.getPageIndex(), searchParam.getPageSize());
     }
 
     @RequestMapping("/com/netease/edu/kada/cache/core/manager/remove")

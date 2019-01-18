@@ -1,5 +1,6 @@
 package com.netease.edu.kada.cache.core.storage;
 
+import com.netease.edu.kada.cache.core.dto.PageInfo;
 import com.netease.edu.kada.cache.core.vo.CacheKeyVo;
 import com.netease.edu.kada.cache.core.vo.ClassCacheVo;
 
@@ -11,12 +12,12 @@ import java.util.Collection;
  */
 public interface CacheStorage {
 
-    Collection<ClassCacheVo> search(SearchParam searchParam, String appName);
+    PageInfo<ClassCacheVo> search(SearchParam searchParam, String appName, int pageIndex, int pageSize);
 
     /**
      * 获取所有缓存
      */
-    Collection<ClassCacheVo> getAllCache(String appName);
+    PageInfo<ClassCacheVo> getAllCache(String appName, int pageIndex, int pageSize);
 
     /**
      * 获取所有的项目

@@ -1,8 +1,10 @@
 package com.netease.edu.kada.cache.controller;
 
+import com.netease.edu.kada.cache.core.dto.PageInfo;
 import com.netease.edu.kada.cache.core.storage.CacheStorage;
 import com.netease.edu.kada.cache.core.storage.SearchParam;
 import com.netease.edu.kada.cache.core.vo.ClassCacheVo;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -26,14 +28,14 @@ public class CacheManageCenterController {
 
     @GetMapping("/project/all")
     @ResponseBody
-    public Collection<ClassCacheVo> projectAllCache(String appName) {
-        return cacheStorage.getAllCache(appName);
+    public PageInfo<ClassCacheVo> projectAllCache(String appName, @RequestParam(defaultValue = "1") int pageIndex, @RequestParam(defaultValue = "20")  int pageSize) {
+        return cacheStorage.getAllCache(appName, pageIndex, pageSize);
     }
 
     @GetMapping("/search")
     @ResponseBody
-    public Collection<ClassCacheVo> search(SearchParam searchParam) {
-        return cacheStorage.search(searchParam, searchParam.getAppName());
+    public PageInfo<ClassCacheVo> search(SearchParam searchParam, int pageIndex, int pageSize) {
+        return cacheStorage.search(searchParam, searchParam.getAppName(), pageIndex, pageSize);
     }
 
     @PostMapping("/remove")
