@@ -4,12 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>kada-cache</artifactId>
-        <groupId>com.netease.edu.kada.cache</groupId>
+        <groupId>org.channel.cache</groupId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>kada-cache-manage-api</artifactId>
+    <artifactId>channel-cache-manage-api</artifactId>
 
     <properties>
         <spring-cloud.version>Finchley.SR2</spring-cloud.version>
@@ -18,7 +18,7 @@
     <dependencies>
         <dependency>
             <artifactId>kada-cache-core</artifactId>
-            <groupId>com.netease.edu.kada.cache</groupId>
+            <groupId>org.channel.cache</groupId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

@@ -25,19 +25,19 @@
   ],
   "groups": [
     {
-      "sourceType": "com.netease.edu.kada.cache.config.CacheWebProperties",
+      "sourceType": "org.channel.cache.config.CacheWebProperties",
       "name": "cacheManage",
-      "type": "com.netease.edu.kada.cache.config.CacheWebProperties"
+      "type": "org.channel.cache.config.CacheWebProperties"
     }
   ],
   "properties": [
     {
-      "sourceType": "com.netease.edu.kada.cache.config.CacheWebProperties",
+      "sourceType": "org.channel.cache.config.CacheWebProperties",
       "name": "cache.manage.appName",
       "type": "java.lang.String"
     },
     {
-      "sourceType": "com.netease.edu.kada.cache.config.CacheWebProperties",
+      "sourceType": "org.channel.cache.config.CacheWebProperties",
       "name": "cache.manage.webEnable",
       "type": "java.lang.Boolean"
     }
